@@ -7,6 +7,7 @@ App::import('Vendor', 'filp/whoops/src/Whoops/Exception/FrameCollection');
 App::import('Vendor', 'filp/whoops/src/Whoops/Exception/Inspector');
 App::import('Vendor', 'filp/whoops/src/Whoops/Handler/HandlerInterface');
 App::import('Vendor', 'filp/whoops/src/Whoops/Handler/Handler');
+App::import('Vendor', 'filp/whoops/src/Whoops/Handler/PlainTextHandler');
 App::import('Vendor', 'filp/whoops/src/Whoops/Handler/PrettyPageHandler');
 App::import('Vendor', 'filp/whoops/src/Whoops/Handler/JsonResponseHandler');
 App::import('Vendor', 'filp/whoops/src/Whoops/Util/Misc');
@@ -46,11 +47,18 @@ class WhoopsExceptionHandler {
 			// Debug level is high enough, use the Whoops handler
 
 			$request = Router::getRequest(true);
+
+			// Default to PrettyPageHandler for all requests
 			$handlerName = 'PrettyPageHandler';
 
-			// If ajax request, use the JsonResponseHandler. Revert to PrettyPageHandler for all other requests.
+			// If ajax request, use the JsonResponseHandler
 			if ($request instanceof CakeRequest && $request->is('ajax')) {
 				$handlerName = 'JsonResponseHandler';
+			}
+
+			// If curl request, use the TextResponseHandler
+			if (isset($_SERVER['HTTP_USER_AGENT']) && stripos($_SERVER['HTTP_USER_AGENT'], 'curl/') === 0) {
+				$handlerName = 'PlainTextHandler';
 			}
 
 			$namespacePath = "\\Whoops\\Handler\\{$handlerName}";
